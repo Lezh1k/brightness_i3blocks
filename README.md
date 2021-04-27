@@ -4,6 +4,8 @@
 
 This small tool listens to file "actual_brightness" modification and reports current brightness percentage. Written in C. It can be used with i3blocks persistent block.
 
+![Screenshot](brightness.png)
+
 ## How to build
 
 `make release`
