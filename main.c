@@ -23,13 +23,13 @@ static void print_brightness_percent(const char *actual_path,
                                      const char *max_path);
 
 static void usage(void) {
-  fprintf(stderr, "brightness %lf - read actual brightness value in non-blocking style.\n\n", VERSION);
+  fprintf(stderr, "brightness %s - read actual brightness value in non-blocking style.\n\n", VERSION);
   fprintf(stderr,
           "Usage: brightness [options]\n\
           \n\
           Options:\n\
-          -a, --actual_brightness_path  \tlist devices with available brightness controls.\n\
-          -m, --max_brightness_path     \tsuppress output.\n\
+          -a, --actual_brightness_path  \tpath to file with actual brightness string\n\
+          -m, --max_brightness_path     \tpath to file with max brightness string\n\
           -h, --help                    \tprint this help.\n\
           -V, --version                 \tprint version and exit.\n\
           \n");
@@ -44,12 +44,13 @@ main(int argc, char *argv[]) {
   char buff[INOTIFY_BUFF_SIZE] = {0};
   fd_set read_descriptors;
   struct timeval time_to_wait;
-  int  ifd, wd, read_len, rc;
+  int  ifd, wd, read_len, rc, opt_idx;
+  size_t opt_len;
   // ifd - inotify_file_descriptor
   // wd - inotify wait descriptor
   // rc - result code
 
-  const struct option lopts[] = {
+  static const struct option lopts[] = {
   {"actual_brightness_path", required_argument,  NULL, 'a'},
   {"max_brightness_path", required_argument,  NULL, 'm'},
   {"help", no_argument, NULL, 'h'},
@@ -57,28 +58,27 @@ main(int argc, char *argv[]) {
   {NULL, 0, NULL, 0},
 };
 
-  size_t opt_len;
-  while (getopt_long(argc, argv, "a:m:hV", lopts, &rc) != -1) {
-    switch (rc) {
+  while ((opt_idx = getopt_long(argc, argv, "a:m:hV", lopts, NULL)) != -1) {
+    switch (opt_idx) {
       case 'a':
         opt_len = strlen(optarg);
         actual_brightness_path = malloc(opt_len + 1);
-        strncpy(actual_brightness_path, optarg, opt_len);
+        strcpy(actual_brightness_path, optarg);
         break;
       case 'm':
         opt_len = strlen(optarg);
         max_brightness_path = malloc(opt_len + 1);
-        strncpy(max_brightness_path, optarg, opt_len);
+        strcpy(max_brightness_path, optarg);
         break;
       case 'h':
         usage();
         return 0;
       case 'V':
-        printf("%lf\n", VERSION);
+        printf("%s\n", VERSION);
         return 0;
       default:
-        printf("something bad is happened. option index is out of bounds (%d)\n", rc);
-        break;
+        printf("something bad is happened. option index is out of bounds (%d %c)\n", opt_idx, (char)opt_idx);
+        return -1;
     }
   }
 
