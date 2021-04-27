@@ -1,3 +1,4 @@
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -5,10 +6,10 @@
 #include <stdbool.h>
 #include <dirent.h>
 #include <stdint.h>
-#include <string.h>
 #include <errno.h>
 #include <assert.h>
 #include <stdarg.h>
+#include <getopt.h>
 #include <sys/select.h>
 #include <sys/inotify.h>
 
@@ -16,19 +17,29 @@
 #define INOTIFY_BUFF_SIZE 64
 
 static bool get_float_value_from_file(const char *path,
-                          float *dst_val);
+                                      float *dst_val);
 
 static void print_brightness_percent(const char *actual_path,
-                         const char *max_path);
+                                     const char *max_path);
+
+static void usage(void) {
+  fprintf(stderr, "brightness %lf - read actual brightness value in non-blocking style.\n\n", VERSION);
+  fprintf(stderr,
+          "Usage: brightness [options]\n\
+          \n\
+          Options:\n\
+          -a, --actual_brightness_path  \tlist devices with available brightness controls.\n\
+          -m, --max_brightness_path     \tsuppress output.\n\
+          -h, --help                    \tprint this help.\n\
+          -V, --version                 \tprint version and exit.\n\
+          \n");
+}
 //////////////////////////////////////////////////////////////
 
 int
 main(int argc, char *argv[]) {
-  (void) argc;
-  (void) argv;
-  // todo move to arguments
-  static const char *actual_brightness_path = "/sys/class/backlight/intel_backlight/actual_brightness";
-  static const char *max_brightness_path = "/sys/class/backlight/intel_backlight/max_brightness";
+  char *actual_brightness_path = "/sys/class/backlight/intel_backlight/actual_brightness";
+  char *max_brightness_path = "/sys/class/backlight/intel_backlight/max_brightness";
 
   char buff[INOTIFY_BUFF_SIZE] = {0};
   fd_set read_descriptors;
@@ -37,6 +48,39 @@ main(int argc, char *argv[]) {
   // ifd - inotify_file_descriptor
   // wd - inotify wait descriptor
   // rc - result code
+
+  const struct option lopts[] = {
+  {"actual_brightness_path", required_argument,  NULL, 'a'},
+  {"max_brightness_path", required_argument,  NULL, 'm'},
+  {"help", no_argument, NULL, 'h'},
+  {"version", no_argument, NULL, 'V'},
+  {NULL, 0, NULL, 0},
+};
+
+  size_t opt_len;
+  while (getopt_long(argc, argv, "a:m:hV", lopts, &rc) != -1) {
+    switch (rc) {
+      case 'a':
+        opt_len = strlen(optarg);
+        actual_brightness_path = malloc(opt_len + 1);
+        strncpy(actual_brightness_path, optarg, opt_len);
+        break;
+      case 'm':
+        opt_len = strlen(optarg);
+        max_brightness_path = malloc(opt_len + 1);
+        strncpy(max_brightness_path, optarg, opt_len);
+        break;
+      case 'h':
+        usage();
+        return 0;
+      case 'V':
+        printf("%lf\n", VERSION);
+        return 0;
+      default:
+        printf("something bad is happened. option index is out of bounds (%d)\n", rc);
+        break;
+    }
+  }
 
   print_brightness_percent(actual_brightness_path,
                            max_brightness_path);
@@ -90,6 +134,10 @@ main(int argc, char *argv[]) {
 
   inotify_rm_watch(ifd, wd);
   close(ifd);
+
+  // cause we used strdup
+  free(actual_brightness_path);
+  free(max_brightness_path);
   return 0;
 }
 //////////////////////////////////////////////////////////////

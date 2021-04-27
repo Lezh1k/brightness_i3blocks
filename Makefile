@@ -11,7 +11,7 @@ OBJ_DIR=$(BUILD_DIR)/obj
 BIN_DIR=bin
 
 LIBS := 
-DEFS := 
+DEFS := -DVERSION=0.1 
 WARN_LEVEL = -Wall -Wextra -pedantic
 
 PRG = brightness

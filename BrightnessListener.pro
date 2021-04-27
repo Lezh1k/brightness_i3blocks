@@ -5,3 +5,5 @@ CONFIG -= qt
 
 SOURCES += \
         main.c
+
+DEFINES += VERSION=0.1

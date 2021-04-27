@@ -1,4 +1,6 @@
 bin/*
 build/*
+
 # QtCreator local machine specific files for imported projects
+*pro.user*
 *creator.user*
