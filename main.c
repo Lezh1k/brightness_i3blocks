@@ -95,14 +95,13 @@ main(int argc, char *argv[]) {
 
   wd = inotify_add_watch(ifd, actual_brightness_path ,
                          IN_MODIFY | IN_CLOSE | IN_CREATE | IN_DELETE);
-  FD_ZERO (&read_descriptors);
-  FD_SET (ifd, &read_descriptors);
-  time_to_wait.tv_sec = 10;
-  time_to_wait.tv_usec = 0;
 
   while (1) {
-    fd_set tmp_set = read_descriptors;
-    rc = select(ifd+1, &tmp_set, NULL, NULL, &time_to_wait);
+    FD_ZERO (&read_descriptors);
+    FD_SET (ifd, &read_descriptors);
+    time_to_wait.tv_sec = 10;
+    time_to_wait.tv_usec = 0;
+    rc = select(ifd+1, &read_descriptors, NULL, NULL, &time_to_wait);
     if (rc < 0) {
       perror("select failed");
       break;
